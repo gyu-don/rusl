@@ -3,6 +3,7 @@
 #[macro_use]
 extern crate syscall;
 pub mod unistd;
+pub mod sys;
 
 #[cfg(test)]
 mod tests {
