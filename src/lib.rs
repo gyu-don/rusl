@@ -7,6 +7,7 @@ extern crate errno_const;
 
 pub mod unistd;
 pub mod sys;
+pub mod fcntl;
 
 #[cfg(test)]
 mod tests {

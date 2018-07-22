@@ -49,7 +49,7 @@ pub unsafe fn ctermid(s: *mut i8) -> *const i8 {
     if s.is_null() {
         b"/dev/tty\0" as *const u8 as *const i8
     } else {
-        (b"/dev/tty\0" as *const u8 as *const i8).copy_to(s, 9);
+        (b"/dev/tty\0" as *const u8 as *const i8).copy_to_nonoverlapping(s, 9);
         s
     }
 }
@@ -76,9 +76,55 @@ pub unsafe fn dup3(old: i32, new: i32, flags: i32) -> i32 {
     }
 }
 
+/*
 pub fn faccessat(fd: i32, filename: *const i8, amode: i32, flag: i32) -> i32 {
-    // TODO: implement
-    0
+    If flag == 0 || (flag == AT_EACCESS && getuid() == geteuid() && getgid() == getegid()) {
+        return syscall!(FACCESSAT, fd, filename, amode, flag) as i32;
+    }
+    if flag != AT_EACCESS {
+        return -EINVAL;
+    }
+    let mut stack: [u8; 1024];
+
+    // TODO: Implement.
+}
+*/
+
+// For internal
+unsafe fn procfdname(buf: *mut i8, fd: u32) {
+    let path = b"/proc/self/fd/";
+    buf.copy_from_nonoverlapping(path.as_ptr() as *const i8, path.len());
+    if fd == 0 {
+        buf.add(path.len()).copy_from_nonoverlapping(b"0\0".as_ptr() as *const i8, 2);
+        return;
+    }
+    let m = {
+        let mut fd = fd;
+        let mut m = 0;
+        while fd > 0 {
+            m += 1;
+            fd /= 10;
+        }
+        m
+    };
+    let mut ptr = buf.add(path.len() + m + 1);
+    ptr.write(0);
+    ptr = ptr.sub(1);
+    for _ in 0..m {
+        ptr.write((fd % 10) as i8);
+        ptr.sub(1);
+    }
+}
+
+pub unsafe fn fchdir(fd: i32) -> i32 {
+    use fcntl::F_GETFD;
+    let r = syscall!(FCHDIR, fd) as i32;
+    if r != -EBADF || (syscall!(FCNTL, fd, F_GETFD) as i32) < 0 {
+        return r;
+    }
+    let mut buf: [i8; 15 + 3 * 4] = ::core::mem::uninitialized();
+    procfdname(buf.as_mut_ptr(), fd as u32);
+    syscall!(CHDIR, buf.as_ptr()) as i32
 }
 
 pub unsafe fn getpid() -> pid_t {
