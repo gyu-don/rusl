@@ -127,6 +127,61 @@ pub unsafe fn fchdir(fd: i32) -> i32 {
     syscall!(CHDIR, buf.as_ptr()) as i32
 }
 
+pub unsafe fn fchown(fd: i32, uid: uid_t, gid: gid_t) -> i32 {
+    use fcntl::F_GETFD;
+    let r = syscall!(FCHOWN, fd, uid, gid) as i32;
+    if r != -EBADF || (syscall!(FCNTL, fd, F_GETFD) as i32) < 0 {
+        return r;
+    }
+    let mut buf: [i8; 15 + 3 * 4] = ::core::mem::uninitialized();
+    procfdname(buf.as_mut_ptr(), fd as u32);
+    syscall!(CHOWN, buf.as_ptr(), uid, gid) as i32
+}
+
+pub unsafe fn fchownat(fd: i32, path: *const i8, uid: uid_t, gid: gid_t, flag: i32) -> i32 {
+    syscall!(FCHOWNAT, fd, path, uid, gid, flag) as i32
+}
+
+pub unsafe fn fdatasync(fd: i32) -> i32 {
+    syscall!(FDATASYNC, fd) as i32
+}
+
+pub unsafe fn fsync(fd: i32) -> i32 {
+    syscall!(FSYNC, fd) as i32
+}
+
+pub unsafe fn ftruncate(fd: i32, length: isize) -> i32 {
+    syscall!(FTRUNCATE, fd, length) as i32
+}
+
+/*
+pub unsafe getcwd(buf: *mut i8, size: usize) {
+    // TODO: Implement.
+}
+*/
+
+pub unsafe fn getegid() -> gid_t {
+    syscall!(GETEGID) as gid_t
+}
+
+pub unsafe fn geteuid() -> uid_t {
+    syscall!(GETEUID) as uid_t
+}
+
+pub unsafe fn getgid() -> gid_t {
+    syscall!(GETGID) as gid_t
+}
+
+pub unsafe fn getgroups(count: i32, list: *mut gid_t) -> i32 {
+    syscall!(GETGROUPS, count, list) as i32
+}
+
+/*
+pub unsafe fn gethostname(name: *mut i8, len: usize) -> i32 {
+    TODO: Implement
+}
+*/
+
 pub unsafe fn getpid() -> pid_t {
     syscall!(GETPID) as pid_t
 }
