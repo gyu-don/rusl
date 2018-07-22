@@ -5,3 +5,4 @@ authors = ["gyu-don <takumi.kt+git@gmail.com>"]
 
 [dependencies]
 syscall = "0.2.1"
+errno-const = { git = "https://github.com/gyu-don/errno-const" }

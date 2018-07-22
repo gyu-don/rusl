@@ -2,6 +2,8 @@ mod types;
 
 pub use self::types::*;
 
+use errno_const::*;
+
 pub unsafe fn access(filename: *const i8, amode: i32) -> i32 {
     syscall!(ACCESS, filename, amode) as i32
 }
@@ -36,7 +38,6 @@ pub unsafe fn chown(path: *const i8, uid: uid_t, gid: gid_t) -> i32 {
 }
 
 pub unsafe fn close(fd: i32) -> i32 {
-    const EINTR: i32 = 4;
     let mut r = syscall!(CLOSE, fd) as i32;
     if r == -EINTR {
         r = 0;
@@ -58,10 +59,8 @@ pub unsafe fn dup(fd: i32) -> i32 {
 }
 
 pub unsafe fn dup2(old: i32, new: i32) -> i32 {
-    const EBUSY: i32 = 16;
-    let r: i32;
     loop {
-        r = syscall!(DUP2, old, new);
+        let r = syscall!(DUP2, old, new) as i32;
         if r != -EBUSY {
             return r;
         }
@@ -69,18 +68,17 @@ pub unsafe fn dup2(old: i32, new: i32) -> i32 {
 }
 
 pub unsafe fn dup3(old: i32, new: i32, flags: i32) -> i32 {
-    const EBUSY: i32 = 16;
-    let r: i32;
     loop {
-        r = syscall!(DUP3, old, new, flags);
+        let r = syscall!(DUP3, old, new, flags) as i32;
         if r != -EBUSY {
             return r;
         }
     }
 }
 
-pub faccessat(fd: i32, filename: *const i8, amode: i32, flag: i32) -> i32 {
-
+pub fn faccessat(fd: i32, filename: *const i8, amode: i32, flag: i32) -> i32 {
+    // TODO: implement
+    0
 }
 
 pub unsafe fn getpid() -> pid_t {

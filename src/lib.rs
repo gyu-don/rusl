@@ -2,6 +2,9 @@
 
 #[macro_use]
 extern crate syscall;
+
+extern crate errno_const;
+
 pub mod unistd;
 pub mod sys;
 
@@ -15,6 +18,6 @@ mod tests {
     #[test]
     fn getpid() {
         use unistd::getpid;
-        assert!(getpid() > 1);
+        assert!(unsafe { getpid() } > 1);
     }
 }
